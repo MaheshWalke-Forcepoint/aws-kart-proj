@@ -1,12 +1,8 @@
-const AWS = require('aws-sdk');
 const { count } = require('console');
-
-const awsRegion = ( "ap-south-1" );//"localhost"
+const docClient = require('./dynamodb.service');
 const tableName = "Counters";
-const docClient = require('./aws.dynamodb.service');
 class CounterService {
 	constructor() {
-        // this.docClient = new AWS.DynamoDB.DocumentClient( { region: awsRegion } );
         this.docClient = docClient;
 	}
 

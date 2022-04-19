@@ -1,22 +1,12 @@
-// const AWS = require('aws-sdk');
-// const docClient = new AWS.DynamoDB.DocumentClient();
+const docClient = require('./dynamodb.service');
 const CounterService = require('./counter.service')
 const productService = require('./product.service')
-// const docClient = require('./aws.dynamodb.service');
 let table = "OrderTable";
-const AWS = require('aws-sdk');
-const awsRegion = ("ap-south-1");
-
-const docClient = new AWS.DynamoDB.DocumentClient({
-    region: awsRegion,
-    accessKeyId: "AKIAYNTWZK4G5D7WFB43",
-    secretAccessKey:"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"
-});
 
 
 module.exports.getOrderedItems = async (email) => {
   try {
-            console.log( "OrderService: getOrderedItems Start",email );
+			  console.log( "OrderService: getOrderedItems Start",email );
           const params = {
               TableName: table,
               FilterExpression: "#email = :email",
@@ -49,7 +39,7 @@ module.exports.orderItem = async (item) =>{
       TableName: table,
       Item: item
      }
-    const quantityCheck = productService.updateProductQuantity(item);
+    const quantityCheck = await productService.updateProductQuantity(item);
     if(!quantityCheck){
       return {
         message: "Product Out of Stock!",

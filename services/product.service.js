@@ -1,31 +1,28 @@
-// const AWS = require('aws-sdk');
-// const docClient = new AWS.DynamoDB.DocumentClient();
+const docClient = require('./dynamodb.service');
 const CounterService = require('./counter.service')
-const docClient = require('./aws.dynamodb.service');
 let table = "ProductTable";
 
 
 module.exports.getAllProductItem = async ({tab, email}) => {
   try {
 			console.log( "ProductService: getalliproducts Start" );
-            let message="List of Products available in the market.",
-                filterExp ="#email <> :email";
-            
-            if( tab == "published") {
-                filterExp = "#email = :email"
-                message =  `List of Products Published by ${email}`;
-            }
+            let message="List of Products available in the market.";
             
             const params = {
-                TableName: table,
-                FilterExpression: filterExp,
-                ExpressionAttributeNames: {
-                    "#email": "supplier_email",
-                },
-                ExpressionAttributeValues: {
-                    ":email": email,
-                }
+                TableName: table
              };
+            
+            if( tab === "published") {
+                message =  `List of Products Published by ${email}`;
+               params.FilterExpression="#email = :email";
+               
+                params.ExpressionAttributeNames = {
+                    "#email": "supplier_email"
+                }
+                params.ExpressionAttributeValues = {
+                    ":email": email
+                }
+             }
             
             let response = await docClient.scan(params).promise();
             console.log( "ProductService: getalliproducts End" );            
@@ -39,21 +36,28 @@ module.exports.getAllProductItem = async ({tab, email}) => {
 
 module.exports.addUpdateProductItem = async (item) =>{
   try {
-      const counterSrv = new CounterService();
-    let counter = await counterSrv.getCounter("product");
-    
-      item.item_id= counter;
-    let params = {
+    let msg = "", params = {
       TableName: table,
       Item: item
-     }
+     };
 
+    if(item.item_id){
+      msg = "Product details has been Modified"
+      params.ConditionExpression = "(#email = :email)",
+      params.ExpressionAttributeNames = {"#email": "supplier_email"};
+      params.ExpressionAttributeValues = {":email": item.supplier_email}
+    }else{
+      const counterSrv = new CounterService();
+      let counter = await counterSrv.getCounter("product");
+      item.item_id= counter;
+      msg = "New Product has been Published!";
+    }
     let result = await docClient.put(params).promise();
     if (result) {
       console.log(">>>>>>>>>", result);
     }
     return {
-        message: "Product entry has been added!",
+        message: msg,
         success: true,
         error:{},
         data: item
@@ -69,7 +73,15 @@ module.exports.deleteProductItem = async (item) =>{
   	console.log( "ProductService: deleteproduct Start" );
     let params = {
       TableName: table,
-      Key:{ item_id: item.item_id}
+      Key:{ item_id: item.item_id},
+      "UpdateExpression": "SET #email = :email",
+        "ExpressionAttributeNames": {
+          "#email": "supplier_email"
+        },
+        "ExpressionAttributeValues": {
+          ":email": item.email
+        },
+        "ConditionExpression": "(#email = :email)"
      }
 
     let result = await docClient.delete(params).promise();

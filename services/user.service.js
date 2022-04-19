@@ -1,7 +1,4 @@
-// const AWS = require('aws-sdk');
-
-// const docClient = new AWS.DynamoDB.DocumentClient();
-const docClient = require('./aws.dynamodb.service');
+const docClient = require('./dynamodb.service');
 const bcrypt = require('bcryptjs');
 let table = "UserTable";
 
